@@ -2,12 +2,15 @@ import pymongo
 from info import DATABASE_URI, DATABASE_NAME
 from pyrogram import enums
 import logging
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
 myclient = pymongo.MongoClient(DATABASE_URI)
 mydb = myclient[DATABASE_NAME]
 
+# ---------- NEW: Per-user settings collection ----------
+USER_SETTINGS = mydb["USER_SETTINGS"]
 
 
 async def add_filter(grp_id, text, reply_text, btn, file, alert):
@@ -15,23 +18,23 @@ async def add_filter(grp_id, text, reply_text, btn, file, alert):
     # mycol.create_index([('text', 'text')])
 
     data = {
-        'text':str(text),
-        'reply':str(reply_text),
-        'btn':str(btn),
-        'file':str(file),
-        'alert':str(alert)
+        'text': str(text),
+        'reply': str(reply_text),
+        'btn': str(btn),
+        'file': str(file),
+        'alert': str(alert)
     }
 
     try:
-        mycol.update_one({'text': str(text)},  {"$set": data}, upsert=True)
-    except:
+        mycol.update_one({'text': str(text)}, {"$set": data}, upsert=True)
+    except Exception:
         logger.exception('Some error occured!', exc_info=True)
-             
-     
+
+
 async def find_filter(group_id, name):
     mycol = mydb[str(group_id)]
-    
-    query = mycol.find( {"text":name})
+
+    query = mycol.find({"text": name})
     # query = mycol.find( { "$text": {"$search": name}})
     try:
         for file in query:
@@ -40,10 +43,10 @@ async def find_filter(group_id, name):
             fileid = file['file']
             try:
                 alert = file['alert']
-            except:
+            except Exception:
                 alert = None
         return reply_text, btn, alert, fileid
-    except:
+    except Exception:
         return None, None, None, None
 
 
@@ -56,15 +59,15 @@ async def get_filters(group_id):
         for file in query:
             text = file['text']
             texts.append(text)
-    except:
+    except Exception:
         pass
     return texts
 
 
 async def delete_filter(message, text, group_id):
     mycol = mydb[str(group_id)]
-    
-    myquery = {'text':text }
+
+    myquery = {'text': text}
     query = mycol.count_documents(myquery)
     if query == 1:
         mycol.delete_one(myquery)
@@ -86,7 +89,7 @@ async def del_all(message, group_id, title):
     try:
         mycol.drop()
         await message.edit_text(f"All filters from {title} has been removed")
-    except:
+    except Exception:
         await message.edit_text("Couldn't remove all filters from group!")
         return
 
@@ -113,3 +116,44 @@ async def filter_stats():
     totalcollections = len(collections)
 
     return totalcollections, totalcount
+
+
+# ==========================
+#  USER PREFERENCE HELPERS
+# ==========================
+
+async def set_user_lang(user_id: int, languages):
+    """
+    languages: list of strings
+    """
+    try:
+        USER_SETTINGS.update_one(
+            {"_id": int(user_id)},
+            {"$set": {"preferred_langs": list(languages)}},
+            upsert=True
+        )
+    except Exception:
+        logger.exception("Error while saving user langs", exc_info=True)
+
+
+async def set_user_quality(user_id: int, quality: str):
+    """
+    quality: like '1080p', '720p', etc.
+    """
+    try:
+        USER_SETTINGS.update_one(
+            {"_id": int(user_id)},
+            {"$set": {"preferred_quality": str(quality)}},
+            upsert=True
+        )
+    except Exception:
+        logger.exception("Error while saving user quality", exc_info=True)
+
+
+async def get_user_settings(user_id: int):
+    try:
+        data = USER_SETTINGS.find_one({"_id": int(user_id)})
+        return data or {}
+    except Exception:
+        logger.exception("Error while fetching user settings", exc_info=True)
+        return {}
