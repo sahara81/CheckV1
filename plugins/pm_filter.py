@@ -19,6 +19,7 @@ from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerId
 from utils import get_size, is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings, import_site, get_shortlink, send_all, check_verification, get_token
 from database.users_chats_db import db
 from database.ia_filterdb import Media, get_file_details, get_search_results, get_bad_files
+from pyrogram import enums
 from database.filters_mdb import (
     del_all,
     find_filter,
@@ -2725,7 +2726,12 @@ async def global_filters(client, message, text=False):
                 break
     else:
         return False
-        @Client.on_message(filters.command("setlang"))
+
+# ==========================
+#  USER PREFERENCE COMMANDS
+# ==========================
+
+@Client.on_message(filters.command("setlang"))
 async def set_lang_cmd(client, message):
     """
     Example:
@@ -2797,4 +2803,6 @@ async def set_quality_cmd(client, message):
     return await message.reply_text(
         f"✅ **Quality preference saved:** `{quality}`",
         parse_mode=enums.ParseMode.MARKDOWN
-    )
+        )
+    
+        
