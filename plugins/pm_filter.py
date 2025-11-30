@@ -2725,8 +2725,22 @@ async def global_filters(client, message, text=False):
                 break
     else:
         return False
-@Client.on_message(filters.private & filters.command("setlang"))
+        @Client.on_message(filters.command("setlang"))
 async def set_lang_cmd(client, message):
+    """
+    Example:
+    /setlang hindi english
+    /setlang hindi,english
+    """
+
+    # Agar group me use karega, PM me bhejne ko bolega
+    if message.chat.type != enums.ChatType.PRIVATE:
+        return await message.reply_text(
+            "⚙️ Language set karne ke liye **bot ke PM me jaa ke** use kar:\n\n"
+            "`/setlang hindi english`",
+            parse_mode=enums.ParseMode.MARKDOWN
+        )
+
     if len(message.command) == 1:
         return await message.reply_text(
             "**Usage:** `/setlang hindi english`\n\n"
@@ -2736,25 +2750,48 @@ async def set_lang_cmd(client, message):
         )
 
     raw = message.text.split(None, 1)[1]
+
     parts = re.split(r"[,\s]+", raw)
     langs = [p.strip().lower() for p in parts if p.strip()]
 
+    if not langs:
+        return await message.reply_text(
+            "Koi language nahi mila 😅\nExample: `/setlang hindi english`",
+            parse_mode=enums.ParseMode.MARKDOWN
+        )
+
     await set_user_lang(message.from_user.id, langs)
+
     return await message.reply_text(
         "✅ **Language preference saved:**\n`" + ", ".join(langs) + "`",
         parse_mode=enums.ParseMode.MARKDOWN
     )
 
 
-@Client.on_message(filters.private & filters.command("setquality"))
+@Client.on_message(filters.command("setquality"))
 async def set_quality_cmd(client, message):
+    """
+    Example:
+    /setquality 1080p
+    /setquality 720p
+    """
+
+    if message.chat.type != enums.ChatType.PRIVATE:
+        return await message.reply_text(
+            "⚙️ Quality set karne ke liye **bot ke PM me** use kar:\n\n"
+            "`/setquality 1080p`",
+            parse_mode=enums.ParseMode.MARKDOWN
+        )
+
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Usage:** `/setquality 1080p`",
+            "**Usage:** `/setquality 1080p`\n\n"
+            "Valid: 2160p, 1440p, 1080p, 1080p hq, 720p, 480p etc.",
             parse_mode=enums.ParseMode.MARKDOWN
         )
 
     quality = message.text.split(None, 1)[1].strip().lower()
+
     await set_user_quality(message.from_user.id, quality)
 
     return await message.reply_text(
