@@ -2725,3 +2725,39 @@ async def global_filters(client, message, text=False):
                 break
     else:
         return False
+@Client.on_message(filters.private & filters.command("setlang"))
+async def set_lang_cmd(client, message):
+    if len(message.command) == 1:
+        return await message.reply_text(
+            "**Usage:** `/setlang hindi english`\n\n"
+            "Languages ko space ya comma se alag karke likh.\n"
+            "Example: `/setlang hindi english`",
+            parse_mode=enums.ParseMode.MARKDOWN
+        )
+
+    raw = message.text.split(None, 1)[1]
+    parts = re.split(r"[,\s]+", raw)
+    langs = [p.strip().lower() for p in parts if p.strip()]
+
+    await set_user_lang(message.from_user.id, langs)
+    return await message.reply_text(
+        "✅ **Language preference saved:**\n`" + ", ".join(langs) + "`",
+        parse_mode=enums.ParseMode.MARKDOWN
+    )
+
+
+@Client.on_message(filters.private & filters.command("setquality"))
+async def set_quality_cmd(client, message):
+    if len(message.command) == 1:
+        return await message.reply_text(
+            "**Usage:** `/setquality 1080p`",
+            parse_mode=enums.ParseMode.MARKDOWN
+        )
+
+    quality = message.text.split(None, 1)[1].strip().lower()
+    await set_user_quality(message.from_user.id, quality)
+
+    return await message.reply_text(
+        f"✅ **Quality preference saved:** `{quality}`",
+        parse_mode=enums.ParseMode.MARKDOWN
+    )
