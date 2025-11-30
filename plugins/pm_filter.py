@@ -23,6 +23,9 @@ from database.filters_mdb import (
     del_all,
     find_filter,
     get_filters,
+    set_user_lang,
+    set_user_quality,
+    get_user_settings,
 )
 from database.gfilters_mdb import (
     find_gfilter,
@@ -39,6 +42,67 @@ logger.setLevel(logging.ERROR)
 BUTTONS = {}
 SPELL_CHECK = {}
 CAP = {}
+
+# -------------------------
+#   USER PREFERENCE SORT
+# -------------------------
+
+QUALITY_ORDER = ["2160p", "1440p", "1080p hq", "1080p", "720p", "480p"]
+
+
+def _detect_quality(name: str) -> str:
+    n = (name or "").lower()
+    for q in QUALITY_ORDER:
+        if q in n:
+            return q
+    return ""
+
+
+async def sort_results_for_user(user_id, files):
+    """
+    files: list of Media objects (get_search_results se jo list aata hai)
+    user ke preferred lang + quality ke hisaab se sorting karega
+    """
+    try:
+        prefs = await get_user_settings(int(user_id))
+    except Exception:
+        prefs = {}
+
+    if not prefs:
+        return files
+
+    preferred_langs = [str(l).lower() for l in prefs.get("preferred_langs", []) if l]
+    preferred_quality = str(prefs.get("preferred_quality", "")).lower()
+
+    if not preferred_langs and not preferred_quality:
+        return files
+
+    def score(file):
+        name = (getattr(file, "file_name", "") or "").lower()
+        s = 0
+
+        # exact preferred quality
+        if preferred_quality and preferred_quality in name:
+            s += 20
+
+        # general quality level
+        q_found = _detect_quality(name)
+        if q_found:
+            try:
+                idx = QUALITY_ORDER.index(q_found)
+                s += max(0, 10 - idx)  # higher quality => higher score
+            except ValueError:
+                pass
+
+        # language hits
+        for lang in preferred_langs:
+            if lang and lang in name:
+                s += 5
+
+        return s
+
+    return sorted(files, key=score, reverse=True)
+    
 
 @Client.on_callback_query(filters.regex(r"^stream"))
 async def stream_download(bot, query):
