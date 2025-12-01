@@ -2216,23 +2216,23 @@ async def auto_filter(client, msg, spoll=False):
     btn.insert(0, [
         InlineKeyboardButton("LANGUAGES", callback_data=f"select_lang#{message.from_user.id}"),
         InlineKeyboardButton("SEASONS", callback_data=f"jk_dev#{message.from_user.id}")
-    ])
+])
 
-    # ADD EPISODE GRID ABOVE SEND ALL
-    btn.insert(0, [
-        InlineKeyboardButton(
-            "📂 Episodes Grid",
+# ADD EPISODE GRID ABOVE SEND ALL
+btn.insert(0, [
+    InlineKeyboardButton(
+        "📂 Episodes Grid",
         callback_data=f"epgrid#{userid}#{search}"
     )
 ])
 
-    # KEEP ORIGINAL SEND ALL LINE BELOW IT
-    btn.insert(0, [
-        InlineKeyboardButton(
-            "📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥",
-            callback_data=f"send_fall#{pre}#{0}#{userid}"
-        )
-    ])
+# KEEP ORIGINAL SEND ALL LINE BELOW IT
+btn.insert(0, [
+    InlineKeyboardButton(
+        "📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥",
+        callback_data=f"send_fall#{pre}#{0}#{userid}"
+    )
+])
 
     if offset != "":
         key = f"{message.chat.id}-{message.id}"
@@ -2837,60 +2837,3 @@ async def global_filters(client, message, text=False):
     else:
         return False
 
-@Client.on_callback_query(filters.regex(r"^epgrid#"))
-async def show_episode_grid(client, query):
-    try:
-        _, userid, search = query.data.split("#", 2)
-
-        if int(userid) != query.from_user.id:
-            return await query.answer("❌ Ye button tumhare liye nahi hai!", show_alert=True)
-
-        files, offset, total = await get_search_results(query.message.chat.id, search)
-
-        if not files:
-            return await query.answer("😕 Koi episode nahi mila!", show_alert=True)
-
-        keyboard = []
-        row = []
-
-        for index, file in enumerate(files, start=1):
-            row.append(
-                InlineKeyboardButton(
-                    str(index),
-                    callback_data=f"sendfile#{userid}#{file.file_id}"
-                )
-            )
-            if len(row) == 5:
-                keyboard.append(row)
-                row = []
-
-        if row:
-            keyboard.append(row)
-
-        keyboard.append([
-            InlineKeyboardButton("⬅️ Back", callback_data=f"back#{userid}#{search}")
-        ])
-
-        await query.message.edit_text(
-            f"📂 **Episodes for:** `{search}`",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-        await query.answer()
-
-    except Exception as e:
-        print(e)
-        await query.answer("⚠️ Error!")
-
-@Client.on_callback_query(filters.regex(r"^sendfile#"))
-async def send_selected_episode(client, query):
-    try:
-        _, userid, file_id = query.data.split("#", 2)
-
-        if int(userid) != query.from_user.id:
-            return await query.answer("❌ Not allowed!", show_alert=True)
-
-        await client.send_cached_media(query.from_user.id, file_id)
-        await query.answer("📤 Sending episode...")
-    except Exception as e:
-        print(e)
-        await query.answer("⚠️ Error sending!")
