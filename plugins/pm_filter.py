@@ -431,7 +431,14 @@ async def language_check(bot, query):
             InlineKeyboardButton("Sᴇʟᴇᴄᴛ Aɢᴀɪɴ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{userid}")
         ])
-
+# 📂 EPISODE GRID BUTTON FIXED POSITION
+if re.search(r"S\d{1,2}", movie, flags=re.IGNORECASE) or "season" in movie.lower():
+    btn.insert(0, [
+        InlineKeyboardButton(
+            "📂 Episodes Grid",
+            callback_data=f"epgrid#{userid}#{movie}"
+        )
+    ])
         btn.insert(0, [
             InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
         ])
@@ -562,6 +569,14 @@ async def quality_check(bot, query):
             InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{userid}")
         ])
+# 📂 EPISODE GRID BUTTON FIXED POSITION
+if re.search(r"S\d{1,2}", movie, flags=re.IGNORECASE) or "season" in movie.lower():
+    btn.insert(0, [
+        InlineKeyboardButton(
+            "📂 Episodes Grid",
+            callback_data=f"epgrid#{userid}#{movie}"
+        )
+    ])
 
         btn.insert(0, [
             InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
@@ -686,6 +701,14 @@ async def seasons_check(bot, query):
             InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇʟᴇᴄᴛ Aɢᴀɪɴ", callback_data=f"jk_dev#{userid}")
         ])
+# 📂 EPISODE GRID BUTTON FIXED POSITION
+if re.search(r"S\d{1,2}", movie, flags=re.IGNORECASE) or "season" in movie.lower():
+    btn.insert(0, [
+        InlineKeyboardButton(
+            "📂 Episodes Grid",
+            callback_data=f"epgrid#{userid}#{movie}"
+        )
+    ])      
 
         btn.insert(0, [
             InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
