@@ -808,7 +808,81 @@ async def advantage_spoll_choker(bot, query):
                 await asyncio.sleep(10)
                 await k.delete()
 
+# ==========================
+#  EPISODE GRID CALLBACK
+# ==========================
 
+@Client.on_callback_query(filters.regex("^epgrid#"))
+async def show_episode_grid(client, query):
+    try:
+        _, userid, search = query.data.split("#", 2)
+
+        # Prevent others from pressing the button
+        if str(userid) != str(query.from_user.id):
+            return await query.answer("❌ Yeh button tumhare liye nahi hai!", show_alert=True)
+
+        # Fix search because underscores remove spaces
+        search = search.replace("_", " ")
+
+        # Fetch files from DB
+        files, offset, total = await get_search_results(query.message.chat.id, search, 0, filter=True)
+
+        if not files:
+            return await query.answer("😕 Episodes nahi mile!", show_alert=True)
+
+        # Build numbered episode buttons
+        keyboard = []
+        row = []
+
+        for index, file in enumerate(files, start=1):
+            row.append(
+                InlineKeyboardButton(
+                    str(index),
+                    callback_data=f"sendfile#{userid}#{file.file_id}"
+                )
+            )
+
+            if len(row) == 5:
+                keyboard.append(row)
+                row = []
+
+        if row:
+            keyboard.append(row)
+
+        # Back Button
+        keyboard.append([
+            InlineKeyboardButton("⬅️ Back", callback_data=f"back#{userid}#{search}")
+        ])
+
+        await query.message.edit_text(
+            f"📂 **Episodes List:**\n`{search}`",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        await query.answer()
+
+    except Exception as e:
+        print(e)
+        await query.answer("⚠️ Error aaya!")
+
+
+# ==========================
+#   SEND SELECTED EPISODE
+# ==========================
+
+@Client.on_callback_query(filters.regex("^sendfile#"))
+async def send_selected_episode(client, query):
+    try:
+        _, userid, file_id = query.data.split("#", 2)
+
+        if str(userid) != str(query.from_user.id):
+            return await query.answer("❌ Tumhara request nahi hai!", show_alert=True)
+
+        await client.send_cached_media(query.from_user.id, file_id)
+        await query.answer("📤 Episode bhej raha hoon...")
+
+    except Exception as e:
+        print(e)
+        await query.answer("⚠️ Episode bhejne me error")
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
     if query.data == "close_data":
