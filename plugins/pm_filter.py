@@ -2187,29 +2187,27 @@ async def auto_filter(client, msg, spoll=False):
             ]
             for file in files
         ]
-        
+
     btn.insert(0, [
-        InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇs", callback_data=f"select_lang#{message.from_user.id}"),
-        InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{message.from_user.id}")
+        InlineKeyboardButton("LANGUAGES", callback_data=f"select_lang#{message.from_user.id}"),
+        InlineKeyboardButton("SEASONS", callback_data=f"jk_dev#{message.from_user.id}")
     ])
 
-    # LANG + SEASON (already in repo, leave as it is)
-
-# ➕ ADD EPISODE GRID ABOVE SEND ALL
+    # ADD EPISODE GRID ABOVE SEND ALL
     btn.insert(0, [
         InlineKeyboardButton(
-        "📂 Episodes Grid",
-        callback_data=f"epgrid#{userid}#{movie}"
-    )
-])
+            "📂 Episodes Grid",
+            callback_data=f"epgrid#{req}#{search.replace(' ', '_')}"
+        )
+    ])
 
-# ✔ KEEP ORIGINAL SEND ALL LINE BELOW IT
-     btn.insert(0, [
+    # KEEP ORIGINAL SEND ALL LINE BELOW IT
+    btn.insert(0, [
         InlineKeyboardButton(
-        "📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥",
-        callback_data=f"send_fall#{pre}#{0}#{userid}"
-    )
-])
+            "📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥",
+            callback_data=f"send_fall#{pre}#{0}#{userid}"
+        )
+    ])
 
     if offset != "":
         key = f"{message.chat.id}-{message.id}"
