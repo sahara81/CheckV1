@@ -358,16 +358,16 @@ async def next_page(bot, query):
         InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{req}"),
         InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{req}")
     ])
-    # --- FORCE EPISODE GRID BUTTON (TEST) ---
     btn.insert(0, [
         InlineKeyboardButton(
         "📂 Episodes Grid",
         callback_data=f"epgrid#{req}#{search}"
+    ),
+        InlineKeyboardButton(
+        "🔥 Send All Files 🔥",
+        callback_data=f"send_all#{req}#{search}"
     )
 ])
-    btn.insert(0, [
-        InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#files#{offset}#{req}"),
-    ])
     try:
         await query.message.edit_text(text=cap + files_link, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
     except MessageNotModified:
@@ -438,16 +438,16 @@ async def language_check(bot, query):
             InlineKeyboardButton("Sᴇʟᴇᴄᴛ Aɢᴀɪɴ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{userid}")
         ])
-        # --- FORCE EPISODE GRID BUTTON (TEST) ---
         btn.insert(0, [
-            InlineKeyboardButton(
-            "📂 Episodes Grid",
+           InlineKeyboardButton(
+           "📂 Episodes Grid",
         callback_data=f"epgrid#{req}#{search}"
+    ),
+            InlineKeyboardButton(
+            "🔥 Send All Files 🔥",
+        callback_data=f"send_all#{req}#{search}"
     )
 ])
-        btn.insert(0, [
-            InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
-        ])
 
         if offset != "":
             key = f"{query.message.chat.id}-{query.message.id}"
@@ -575,17 +575,16 @@ async def quality_check(bot, query):
             InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{userid}")
         ])
-        # --- FORCE EPISODE GRID BUTTON (TEST) ---
         btn.insert(0, [
-            InlineKeyboardButton(
-            "📂 Episodes Grid",
+           InlineKeyboardButton(
+           "📂 Episodes Grid",
         callback_data=f"epgrid#{req}#{search}"
+    ),
+           InlineKeyboardButton(
+           "🔥 Send All Files 🔥",
+        callback_data=f"send_all#{req}#{search}"
     )
 ])
-
-        btn.insert(0, [
-            InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
-        ])
 
         if offset != "":
             key = f"{query.message.chat.id}-{query.message.id}"
@@ -605,7 +604,7 @@ async def quality_check(bot, query):
             except KeyError:
                 await save_group_settings(query.message.chat.id, 'max_btn', True)
                 btn.append(
-                    [InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/10)}",callback_data="pages"), InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪",callback_data=f"next_{req}_{key}_{offset}")]
+                    [InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/10)}",callback_data="pages"), InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪",callback_data=f"next_{req}_{key }_{offset}")]
                 )
         try:
             await query.message.edit_text(text=cap + files_link, reply_markup=InlineKeyboardMarkup(btn), disable_web_page_preview=True)
@@ -706,16 +705,16 @@ async def seasons_check(bot, query):
             InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇʟᴇᴄᴛ Aɢᴀɪɴ", callback_data=f"jk_dev#{userid}")
         ])
-        # --- FORCE EPISODE GRID BUTTON (TEST) ---
         btn.insert(0, [
             InlineKeyboardButton(
-            "📂 Episodes Grid",
+        "📂 Episodes Grid",
         callback_data=f"epgrid#{req}#{search}"
+    ),
+            InlineKeyboardButton(
+        "🔥 Send All Files 🔥",
+        callback_data=f"send_all#{req}#{search}"
     )
 ])
-        btn.insert(0, [
-            InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
-        ])
 
         if offset != "":
             key = f"{query.message.chat.id}-{query.message.id}"
