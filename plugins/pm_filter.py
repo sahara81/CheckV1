@@ -807,6 +807,9 @@ async def advantage_spoll_choker(bot, query):
                 k = await query.message.edit(script.MVE_NT_FND)
                 await asyncio.sleep(10)
                 await k.delete()
+# ==========================
+#  EPISODE GRID CALLBACK
+# ==========================
 
 @Client.on_callback_query(filters.regex("^epgrid#"))
 async def show_episode_grid(client, query):
@@ -814,19 +817,28 @@ async def show_episode_grid(client, query):
         _, userid, search = query.data.split("#", 2)
 
         if str(userid) != str(query.from_user.id):
-            return await query.answer("❌ ये तुम्हारा नहीं है.", show_alert=True)
+            return await query.answer("❌ Not for you.", show_alert=True)
 
-        search = search.replace("_", " ")
-        files, offset, total = await get_search_results(query.message.chat.id, search, 0, filter=True)
+        files, offset, total = await get_search_results(
+            query.message.chat.id,
+            search,
+            offset=0,
+            filter=True
+        )
 
         if not files:
-            return await query.answer("😕 कुछ नहीं मिला.", show_alert=True)
+            return await query.answer("😕 No episodes found.", show_alert=True)
 
         keyboard = []
         row = []
 
-        for i, file in enumerate(files, start=1):
-            row.append(InlineKeyboardButton(str(i), callback_data=f"sendfile#{userid}#{file.file_id}"))
+        for num, file in enumerate(files, start=1):
+            row.append(
+                InlineKeyboardButton(
+                    str(num),
+                    callback_data=f"sendfile#{userid}#{file.file_id}"
+                )
+            )
 
             if len(row) == 5:
                 keyboard.append(row)
@@ -835,27 +847,40 @@ async def show_episode_grid(client, query):
         if row:
             keyboard.append(row)
 
-        keyboard.append([InlineKeyboardButton("⬅️ Back", callback_data=f"back#{userid}#{search}")])
+        keyboard.append([
+            InlineKeyboardButton("⬅️ Back", callback_data=f"back#{userid}#{search}")
+        ])
 
         await query.message.edit_text(
-            f"📂 Episodes for `{search}`",
+            f"📂 **Episodes list for:** `{search}`",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
         await query.answer()
 
     except Exception as e:
-        print("[GRID ERROR]", e)
-        await query.answer("⚠ Error")
+        print("[EPGRID ERROR]", e)
+        await query.answer("⚠ Error occurred.")
+
+
+# ==========================
+#  EPISODE SEND CALLBACK
+# ==========================
 
 @Client.on_callback_query(filters.regex("^sendfile#"))
-async def send_episode(client, query):
-    _, userid, file_id = query.data.split("#", 2)
+async def send_selected_episode(client, query):
+    try:
+        _, userid, file_id = query.data.split("#", 2)
 
-    if str(userid) != str(query.from_user.id):
-        return await query.answer("❌ नहीं हो सकता", show_alert=True)
+        if str(userid) != str(query.from_user.id):
+            return await query.answer("❌ Not allowed.", show_alert=True)
 
-    await client.send_cached_media(query.from_user.id, file_id)
-    await query.answer("📤 Sending episode...")
+        await client.send_cached_media(query.from_user.id, file_id)
+        await query.answer("📤 Sending episode...")
+
+    except Exception as e:
+        print("[SENDFILE ERROR]", e)
+        await query.answer("⚠ Error sending file.")
     
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -2197,9 +2222,9 @@ async def auto_filter(client, msg, spoll=False):
     btn.insert(0, [
         InlineKeyboardButton(
             "📂 Episodes Grid",
-            callback_data=f"epgrid#{req}#{search.replace(' ', '_')}"
-        )
-    ])
+        callback_data=f"epgrid#{userid}#{search}"
+    )
+])
 
     # KEEP ORIGINAL SEND ALL LINE BELOW IT
     btn.insert(0, [
