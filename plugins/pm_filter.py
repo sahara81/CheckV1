@@ -358,11 +358,11 @@ async def next_page(bot, query):
         InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{req}"),
         InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{req}")
     ])
-    if re.search(r"S\d{1,2}", movie, flags=re.IGNORECASE):
+    if re.search(r"S\d{1,2}", search, flags=re.IGNORECASE) or "season" in search.lower():
         btn.insert(0, [
             InlineKeyboardButton(
             "📂 Episodes Grid",
-            callback_data=f"epgrid#{userid}#{movie}"
+            callback_data=f"epgrid#{req}#{search}"
         )
     ])
     btn.insert(0, [
@@ -438,11 +438,11 @@ async def language_check(bot, query):
             InlineKeyboardButton("Sᴇʟᴇᴄᴛ Aɢᴀɪɴ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{userid}")
         ])
-        if re.search(r"S\d{1,2}", movie, flags=re.IGNORECASE):
+        if re.search(r"S\d{1,2}", search, flags=re.IGNORECASE) or "season" in search.lower():
             btn.insert(0, [
                 InlineKeyboardButton(
                 "📂 Episodes Grid",
-            callback_data=f"epgrid#{userid}#{movie}"
+            callback_data=f"epgrid#{req}#{search}"
         )
     ])
         btn.insert(0, [
@@ -575,14 +575,13 @@ async def quality_check(bot, query):
             InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{userid}")
         ])
-#       # 📂 EPISODE GRID BUTTON FIXED POSITION
-        if re.search(r"S\d{1,2}", movie, flags=re.IGNORECASE) or "season" in movie.lower():
+        if re.search(r"S\d{1,2}", search, flags=re.IGNORECASE) or "season" in search.lower():
             btn.insert(0, [
                 InlineKeyboardButton(
-                "📂 Episodes Grid",
-            callback_data=f"epgrid#{userid}#{movie}"
+               "📂 Episodes Grid",
+            callback_data=f"epgrid#{req}#{search}"
         )
-      ])
+    ])
 
         btn.insert(0, [
             InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
@@ -707,14 +706,13 @@ async def seasons_check(bot, query):
             InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇ", callback_data=f"select_lang#{userid}"),
             InlineKeyboardButton("Sᴇʟᴇᴄᴛ Aɢᴀɪɴ", callback_data=f"jk_dev#{userid}")
         ])
-# 📂 EPISODE GRID BUTTON FIXED POSITION
-        if re.search(r"S\d{1,2}", movie, flags=re.IGNORECASE) or "season" in movie.lower():
+        if re.search(r"S\d{1,2}", search, flags=re.IGNORECASE) or "season" in search.lower():
             btn.insert(0, [
                 InlineKeyboardButton(
                 "📂 Episodes Grid",
-            callback_data=f"epgrid#{userid}#{movie}"
+            callback_data=f"epgrid#{req}#{search}"
         )
-    ])      
+    ])
         btn.insert(0, [
             InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{userid}")
         ])
@@ -2756,71 +2754,59 @@ async def global_filters(client, message, text=False):
         return False
 
 @Client.on_callback_query(filters.regex(r"^epgrid#"))
-async def ep_grid(client, query):
+async def show_episode_grid(client, query):
     try:
-        _, uid, title = query.data.split("#", 2)
-    except:
-        return await query.answer("Error", show_alert=True)
+        _, userid, search = query.data.split("#", 2)
 
-    if int(uid) != query.from_user.id:
-        return await query.answer("This button isn't for you 😅", show_alert=True)
+        if int(userid) != query.from_user.id:
+            return await query.answer("❌ Ye button tumhare liye nahi hai!", show_alert=True)
 
-    chat = query.message.chat.id
+        files, offset, total = await get_search_results(query.message.chat.id, search)
 
-    files, offset, total = await get_search_results(chat, title.lower(), 0, filter=True)
+        if not files:
+            return await query.answer("😕 Koi episode nahi mila!", show_alert=True)
 
-    if not files:
-        return await query.answer("No episodes found.", show_alert=True)
+        keyboard = []
+        row = []
 
-    def get_ep(f):
-        name = (getattr(f, "file_name", "") or getattr(f, "caption", "")).lower()
-        m = re.search(r"(?:e|ep|episode)[\s._-]*(\d{1,2})", name)
-        if m:
-            return int(m.group(1))
-        nums = re.findall(r"(\d{1,2})", name)
-        return int(nums[-1]) if nums else 999
+        for index, file in enumerate(files, start=1):
+            row.append(
+                InlineKeyboardButton(
+                    str(index),
+                    callback_data=f"sendfile#{userid}#{file.file_id}"
+                )
+            )
+            if len(row) == 5:
+                keyboard.append(row)
+                row = []
 
-    episodes = sorted(files, key=get_ep)
+        if row:
+            keyboard.append(row)
 
-    rows, row = [], []
-    for f in episodes:
-        ep_no = get_ep(f)
-        label = str(ep_no) if ep_no != 999 else "?"
-        row.append(InlineKeyboardButton(label, callback_data=f"epsend#{uid}#{f.file_id}"))
+        keyboard.append([
+            InlineKeyboardButton("⬅️ Back", callback_data=f"back#{userid}#{search}")
+        ])
 
-        if len(row) == 4:
-            rows.append(row)
-            row = []
+        await query.message.edit_text(
+            f"📂 **Episodes for:** `{search}`",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        await query.answer()
 
-    if row:
-        rows.append(row)
+    except Exception as e:
+        print(e)
+        await query.answer("⚠️ Error!")
 
-    await query.message.reply_text(
-        f"📂 **Episodes for:** `{title}`",
-        reply_markup=InlineKeyboardMarkup(rows),
-        parse_mode=enums.ParseMode.MARKDOWN
-    )
-    await query.answer()
-
-@Client.on_callback_query(filters.regex(r"^epsend#"))
-async def ep_send(client, query):
+@Client.on_callback_query(filters.regex(r"^sendfile#"))
+async def send_selected_episode(client, query):
     try:
-        _, uid, file_id = query.data.split("#", 2)
-    except:
-        return await query.answer("Error", show_alert=True)
+        _, userid, file_id = query.data.split("#", 2)
 
-    if int(uid) != query.from_user.id:
-        return await query.answer("Not for you 😅", show_alert=True)
+        if int(userid) != query.from_user.id:
+            return await query.answer("❌ Not allowed!", show_alert=True)
 
-    try:
         await client.send_cached_media(query.from_user.id, file_id)
-        return await query.answer("📤 Sent to PM.")
-    except:
-        pass
-
-    try:
-        await client.send_document(query.from_user.id, file_id)
-        return await query.answer("📤 Sent.")
-    except Exception:
-        return await query.answer("Couldn't send.", show_alert=True)
-
+        await query.answer("📤 Sending episode...")
+    except Exception as e:
+        print(e)
+        await query.answer("⚠️ Error sending!")
