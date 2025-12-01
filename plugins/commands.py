@@ -8,6 +8,9 @@ from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from database.ia_filterdb import Media, get_file_details, unpack_new_file_id, get_bad_files
 from database.users_chats_db import db
+from database.filters_mdb import set_user_lang, set_user_quality
+from pyrogram import enums
+import re
 from info import CHANNELS, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT, CHNL_LNK, GRP_LNK, REQST_CHANNEL, SUPPORT_CHAT_ID, MAX_B_TN, IS_VERIFY, HOW_TO_VERIFY
 from utils import get_settings, get_size, is_subscribed, save_group_settings, temp, verify_user, check_token, check_verification, get_token, send_all
 from database.connections_mdb import active_connection
@@ -866,3 +869,38 @@ async def stop_button(bot, message):
     await asyncio.sleep(3)
     await msg.edit("✅️ 𝙱𝙾𝚃 𝙸𝚂 𝚁𝙴𝚂𝚃𝙰𝚁𝚃𝙴𝙳. 𝙽𝙾𝚆 𝚈𝙾𝚄 𝙲𝙰𝙽 𝚄𝚂𝙴 𝙼𝙴")
     os.execl(sys.executable, sys.executable, *sys.argv)
+
+# ------------------- USER SETTINGS -------------------
+
+@Client.on_message(filters.command("setlang"))
+async def set_lang_cmd(client, message):
+
+    if message.chat.type != enums.ChatType.PRIVATE:
+        return await message.reply("⚙️ Command private chat me use kar.")
+
+    if len(message.command) == 1:
+        return await message.reply("Usage:\n`/setlang hindi english`", quote=True)
+
+    languages = re.split(r"[,\s]+", message.text.split(None, 1)[1])
+    langs = [l.lower() for l in languages if l.strip()]
+
+    await set_user_lang(message.from_user.id, langs)
+
+    await message.reply(f"✔️ Language set: `{', '.join(langs)}`", quote=True)
+
+
+
+@Client.on_message(filters.command("setquality"))
+async def set_quality_cmd(client, message):
+
+    if message.chat.type != enums.ChatType.PRIVATE:
+        return await message.reply("⚙️ Command private chat me use kar.")
+
+    if len(message.command) == 1:
+        return await message.reply("Usage:\n`/setquality 1080p`", quote=True)
+
+    quality = message.text.split(None, 1)[1].lower().strip()
+
+    await set_user_quality(message.from_user.id, quality)
+
+    await message.reply(f"✔️ Quality set: `{quality}`", quote=True)
