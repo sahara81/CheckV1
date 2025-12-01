@@ -2750,3 +2750,72 @@ async def global_filters(client, message, text=False):
     else:
         return False
 
+@Client.on_callback_query(filters.regex(r"^epgrid#"))
+async def ep_grid(client, query):
+    try:
+        _, uid, title = query.data.split("#", 2)
+    except:
+        return await query.answer("Error", show_alert=True)
+
+    if int(uid) != query.from_user.id:
+        return await query.answer("This button isn't for you 😅", show_alert=True)
+
+    chat = query.message.chat.id
+
+    files, offset, total = await get_search_results(chat, title.lower(), 0, filter=True)
+
+    if not files:
+        return await query.answer("No episodes found.", show_alert=True)
+
+    def get_ep(f):
+        name = (getattr(f, "file_name", "") or getattr(f, "caption", "")).lower()
+        m = re.search(r"(?:e|ep|episode)[\s._-]*(\d{1,2})", name)
+        if m:
+            return int(m.group(1))
+        nums = re.findall(r"(\d{1,2})", name)
+        return int(nums[-1]) if nums else 999
+
+    episodes = sorted(files, key=get_ep)
+
+    rows, row = [], []
+    for f in episodes:
+        ep_no = get_ep(f)
+        label = str(ep_no) if ep_no != 999 else "?"
+        row.append(InlineKeyboardButton(label, callback_data=f"epsend#{uid}#{f.file_id}"))
+
+        if len(row) == 4:
+            rows.append(row)
+            row = []
+
+    if row:
+        rows.append(row)
+
+    await query.message.reply_text(
+        f"📂 **Episodes for:** `{title}`",
+        reply_markup=InlineKeyboardMarkup(rows),
+        parse_mode=enums.ParseMode.MARKDOWN
+    )
+    await query.answer()
+
+@Client.on_callback_query(filters.regex(r"^epsend#"))
+async def ep_send(client, query):
+    try:
+        _, uid, file_id = query.data.split("#", 2)
+    except:
+        return await query.answer("Error", show_alert=True)
+
+    if int(uid) != query.from_user.id:
+        return await query.answer("Not for you 😅", show_alert=True)
+
+    try:
+        await client.send_cached_media(query.from_user.id, file_id)
+        return await query.answer("📤 Sent to PM.")
+    except:
+        pass
+
+    try:
+        await client.send_document(query.from_user.id, file_id)
+        return await query.answer("📤 Sent.")
+    except Exception:
+        return await query.answer("Couldn't send.", show_alert=True)
+
