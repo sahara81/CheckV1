@@ -630,7 +630,7 @@ async def seasons_check(bot, query):
             key = f"{query.message.chat.id}-{query.message.id}"
             BUTTONS[key] = movie
             CAP[key] = movie
-            req = userid
+            req = message.from_user.id
             try:
                 if settings['max_btn']:
                     btn.append(
@@ -718,7 +718,73 @@ async def advantage_spoll_choker(bot, query):
                 await asyncio.sleep(10)
                 await k.delete()
 
+@Client.on_callback_query(filters.regex("^epgrid#"))
+async def show_episode_grid(client, query):
+    try:
+        _, userid, search = query.data.split("#", 2)
+        search = search.replace("_", " ")
 
+        if str(userid) != str(query.from_user.id):
+            return await query.answer("❌ Not your request.", show_alert=True)
+
+        files, offset, total = await get_search_results(
+            query.message.chat.id,
+            search,
+            offset=0,
+            filter=True
+        )
+
+        if not files:
+            return await query.answer("😕 No episodes found.", show_alert=True)
+
+        keyboard = []
+        row = []
+
+        for index, file in enumerate(files, start=1):
+            row.append(
+                InlineKeyboardButton(
+                    str(index),
+                    callback_data=f"sendfile#{userid}#{file.file_id}"
+                )
+            )
+
+            if len(row) == 5:
+                keyboard.append(row)
+                row = []
+
+        if row:
+            keyboard.append(row)
+
+        keyboard.append([
+            InlineKeyboardButton("⬅ Back", callback_data=f"back#{userid}#{search.replace(' ','_')}")
+        ])
+
+        await query.message.edit_text(
+            f"📂 **Episodes for:** `{search}`",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        await query.answer()
+
+    except Exception as e:
+        print("[GRID ERROR]", e)
+        await query.answer("⚠ Error!")
+
+
+
+@Client.on_callback_query(filters.regex("^sendfile#"))
+async def send_selected_episode(client, query):
+    try:
+        _, userid, file_id = query.data.split("#", 2)
+
+        if str(userid) != str(query.from_user.id):
+            return await query.answer("❌ Not allowed.", show_alert=True)
+
+        await client.send_cached_media(query.from_user.id, file_id)
+        await query.answer("📤 Sending episode...")
+
+    except Exception as e:
+        print("[SENDFILE ERROR]", e)
+        await query.answer("⚠ Error sending!")
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
     if query.data == "close_data":
@@ -1971,6 +2037,8 @@ async def auto_filter(client, msg, spoll=False):
         if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
         if len(message.text) < 100:
+            userid = message.from_user.id
+            req = message.from_user.id
             search = message.text
             m=await message.reply_text("**Searching...**")
             search = search.lower()
@@ -2053,6 +2121,12 @@ async def auto_filter(client, msg, spoll=False):
         InlineKeyboardButton("Lᴀɴɢᴜᴀɢᴇs", callback_data=f"select_lang#{message.from_user.id}"),
         InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{message.from_user.id}")
     ])
+    btn.insert(0, [
+        InlineKeyboardButton(
+        "📂 Episodes Grid",
+        callback_data=f"epgrid#{message.from_user.id}#{search.replace(' ', '_')}"
+    )
+])
 
     btn.insert(0, [
         InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{message.from_user.id}"),
