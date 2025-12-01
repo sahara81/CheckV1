@@ -1954,7 +1954,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data == "owner_info":
             btn = [[
                     InlineKeyboardButton("⟸ Bᴀᴄᴋ", callback_data="start"),
-                    InlineKeyboardButton("Cᴏɴᴛᴀᴄᴛ", url="t.me/Master_Jiraya_Bot")
+                    InlineKeyboardButton("Cᴏɴᴛᴀᴄᴛ", url="t.me/Mas")
                   ]]
             await client.edit_message_media(
                 query.message.chat.id, 
@@ -2145,9 +2145,23 @@ async def auto_filter(client, msg, spoll=False):
         InlineKeyboardButton("Sᴇᴀꜱᴏɴꜱ", callback_data=f"jk_dev#{message.from_user.id}")
     ])
 
+    # LANG + SEASON (already in repo, leave as it is)
+
+# ➕ ADD EPISODE GRID ABOVE SEND ALL
     btn.insert(0, [
-        InlineKeyboardButton("📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥", callback_data=f"send_fall#{pre}#{0}#{message.from_user.id}"),
-    ])
+        InlineKeyboardButton(
+        "📂 Episodes Grid",
+        callback_data=f"epgrid#{userid}#{movie}"
+    )
+])
+
+# ✔ KEEP ORIGINAL SEND ALL LINE BELOW IT
+     btn.insert(0, [
+        InlineKeyboardButton(
+        "📥 𝗦𝗲𝗻𝗱 𝗔𝗹𝗹 𝗙𝗶𝗹𝗲𝘀 📥",
+        callback_data=f"send_fall#{pre}#{0}#{userid}"
+    )
+])
 
     if offset != "":
         key = f"{message.chat.id}-{message.id}"
